@@ -1,0 +1,39 @@
+# STM32CubeIDE specific files and directories
+.metadata/
+.settings/
+.project
+.cproject
+.launch
+*.launch
+*.log
+*.extsettings
+*.bak
+
+# Build output directories
+Debug/
+Release/
+build/
+obj/
+
+# Generated files
+*.elf
+*.hex
+*.bin
+*.map
+*.o
+*.d
+*.su
+*.srec
+
+# Linker scripts (if generated and not custom)
+*.ld
+
+# STM32CubeMX generated files (optional, depending on workflow)
+# If you regenerate code frequently and don't want to track changes in .ioc
+# or if you use CubeMX to generate a fresh project each time.
+# *.ioc
+
+# Other temporary or user-specific files
+*.~
+*.swp
+*.tmp
