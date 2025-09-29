@@ -1,0 +1,49 @@
+/******************************************************************************
+ *		Header File Containing TI - BoostXL  related Informations and
+ *		Drivers (API's) Related to interact with sensors present in TI
+ *		BoostXL sensors Evaluation board. This software is developed to
+ *		Integrate BoostXL sensor Evaluation board with STM32L476RG Nucleo
+ *		Development board.
+ *
+ *****************************************************************************/
+
+#ifndef TIBOOSTXLSENSORS_SENSORS_H_
+#define TIBOOSTXLSENSORS_SENSORS_H_
+
+/******************************************************************************
+ * Global Includes.
+ *****************************************************************************/
+#include <stdint.h>
+#include <stdbool.h>
+#include "stm32l476xx.h"
+#include "stm32l4xx_hal.h"
+
+/******************************************************************************
+ * Macro Definitions.
+ *****************************************************************************/
+
+/******************************************************************************
+ * Enum Definitions.
+ *****************************************************************************/
+/*
+ * @brief: Enum Representing values from OPT3001 Light Sensor.
+ */
+typedef enum _eOpt3001Vals_
+{
+
+} ;
+
+/******************************************************************************
+ * Structure Definitions.
+ *****************************************************************************/
+
+/******************************************************************************
+ * Function Declarations.
+ *****************************************************************************/
+void InitTiSensorBooster(void);
+uint16_t GetOPT3001MfId(void);
+uint16_t GetOPT3001Vals();
+
+
+
+#endif /* TIBOOSTXLSENSORS_SENSORS_H_ */

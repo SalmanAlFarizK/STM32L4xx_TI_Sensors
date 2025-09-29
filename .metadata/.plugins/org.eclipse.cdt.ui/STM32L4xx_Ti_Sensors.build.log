@@ -1,0 +1,10 @@
+19:44:06 **** Incremental Build of configuration Debug for project STM32L4xx_Ti_Sensors ****
+make -j12 all 
+arm-none-eabi-size  STM32L4xx_Ti_Sensors.elf 
+   text	   data	    bss	    dec	    hex	filename
+  19384	    100	   2124	  21608	   5468	STM32L4xx_Ti_Sensors.elf
+Finished building: default.size.stdout
+ 
+
+19:44:06 Build Finished. 0 errors, 0 warnings. (took 368ms)
+

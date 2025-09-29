@@ -1,0 +1,58 @@
+/******************************************************************************
+ *		Header File Containing TI - BoostXL  related Informations and
+ *		Drivers (API's) Related to interact with sensors present in TI
+ *		BoostXL sensors Evaluation board. This software is developed to
+ *		Integrate BoostXL sensor Evaluation board with STM32L476RG Nucleo
+ *		Development board.
+ *
+ *****************************************************************************/
+
+#ifndef TIBOOSTXLSENSORS_SENSORS_H_
+#define TIBOOSTXLSENSORS_SENSORS_H_
+#include <stdint.h>
+#include <stdbool.h>
+#include "stm32l476xx.h"
+
+/******************************************************************************
+ * Macro Definitions.
+ *****************************************************************************/
+
+/******************************************************************************
+ * Enum Definitions.
+ *****************************************************************************/
+
+/******************************************************************************
+ * Structure Definitions.
+ *****************************************************************************/
+/*
+ * @brief : Configuration Structure for ADC.
+ */
+typedef struct _ADC_Config_t_
+{
+	uint8_t ucAdcReslnCnfg;
+	uint8_t ucAdcDataAllingment;
+	uint8_t ucAdcConvMode;
+	uint8_t ucAdcSamplingTime;
+	uint8_t ucAdcChannelId;
+} ADC_Config_t;
+
+/*
+ * @brief : Handle Structure for ADC.
+ */
+typedef struct _ADC_Handle_t_
+{
+	ADC_Regdef_t* pADC;
+	ADC_Config_t  ADCConfig;
+} ADC_Handle_t;
+
+/******************************************************************************
+ * Function Declarations.
+ *****************************************************************************/
+void AdcInit(ADC_Handle_t* ptAdcHandle);
+void AdcCalibrate(ADC_Regdef_t* pADC);
+void AdcEnable(ADC_Regdef_t* pADC);
+uint16_t AdcReadChannel(ADC_Regdef_t* pADC, uint8_t ucChannel);
+
+
+
+#endif /* TIBOOSTXLSENSORS_SENSORS_H_ */

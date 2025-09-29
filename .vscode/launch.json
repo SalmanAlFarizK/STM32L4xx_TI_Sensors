@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "cppdbg",
+      "request": "launch",
+      "args": [],
+      "stopAtEntry": false,
+      "externalConsole": true,
+      "cwd": "d:/BITSILICA/SALMAN/Learning/STM32/STM32_Projects/STM32L4xx_TI_Sensors/STM32L4xx_Ti_Sensors/Core/TiBoostXLSensors",
+      "program": "d:/BITSILICA/SALMAN/Learning/STM32/STM32_Projects/STM32L4xx_TI_Sensors/STM32L4xx_Ti_Sensors/Core/TiBoostXLSensors/build/Debug/outDebug",
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    }
+  ]
+}

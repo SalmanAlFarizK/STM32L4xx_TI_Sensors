@@ -1,0 +1,1111 @@
+/******************************************************************************
+ *		Source File Containing TI - BoostXL  related Informations and
+ *		Drivers (API's) Related to interact with sensors present in TI
+ *		BoostXL sensors Evaluation board. This software is developed to
+ *		Integrate BoostXL sensor Evaluation board with STM32L476RG Nucleo
+ *		Development board.
+ *
+ *		@Author: Salman Al Fariz K
+ *		@Date: 	 26/09/2025
+ *
+ *****************************************************************************/
+
+/******************************************************************************
+ * Global Includes.
+ *****************************************************************************/
+#include <string.h>
+#include "sensors.h"
+
+/******************************************************************************
+ * Macro Definitions.
+ *****************************************************************************/
+#define I2C_OPT3001_SLAVE_ADDR					(0x47)
+#define I2C_BMI160_SLAVE_ADDR					(0x69)
+#define I2C_BME280_SLAVE_ADDR					(0x77)
+
+/* Register Information of OPT3001 Light Ambient Sensor. */
+#define REG_OPT3001_RES							(0x00)
+#define REG_OPT3001_MFID						(0x7E)
+#define REG_OPT300_DEVID						(0x7F)
+#define REG_OPT3001_CONFIG						(0x01)
+
+/* Register Information of BMI160 IMU Sensor. */
+#define	BMI160_CHIPID							(0x00)
+#define	BMI160_MAG_X_REG						(0x04)
+#define	BMI160_STATUS_REG						(0x1B)
+#define	BMI160_CMD_REG							(0x7E)
+#define BMM150_I2C_ADDR							(0x13)
+#define BMI_GYRO_X_REG							(0x0C)
+#define BMI_GYRO_Y_REG							(0x0E)
+#define BMI_GYRO_Z_REG							(0x10)
+#define BMI_ACCEL_X_REG							(0x12)
+#define BMI_ACCEL_Y_REG							(0x14)
+#define BMI_ACCEL_Z_REG							(0x16)
+
+/* Register Information of BME280 IMU Sensor. */
+#define BME280_CTRL_HUMD_REG					(0xF2)
+#define BME280_CTRL_MEAS_REG					(0xF4)
+#define BME280_CHIPID_REG						(0xD0)
+#define BME280_PRESS_REG						(0xF7)
+
+
+/******************************************************************************
+ * Enum Definitions.
+ *****************************************************************************/
+
+/******************************************************************************
+ * Structure Definitions.
+ *****************************************************************************/
+
+/******************************************************************************
+ * Global Variable declaration.
+ *****************************************************************************/
+I2C_HandleTypeDef hi2c1;
+
+/******************************************************************************
+ * Static Function declaration.
+ *****************************************************************************/
+static void MX_I2C1_Init(void);
+
+/* OPT3001 Ambient Light Sensor Related Functions. */
+static uint16_t GetOPT3001MfId(void);
+static uint16_t GetOPT3001DevId(void);
+static uint16_t GetOPT3001LightRes(void);
+
+/* BMI160 IMU Sensor Related Functions. */
+static uint8_t GetBMI160ChipId(void);
+static uint16_t GetBMI160MagnetoMeterXAxes(void);
+static uint16_t GetGyroScopeXAxes(void);
+static uint16_t GetGyroScopeYAxes(void);
+static uint16_t GetGyroScopeZAxes(void);
+static uint16_t GetAccelXAxes(void);
+static uint16_t GetAccelYAxes(void);
+static uint16_t GetAccelZAxes(void);
+static void BMI160_EnableGyro(void);
+static void BMI160_EnableAccel(void);
+static void BMI160_InitMagnetometer(void);
+
+/* BME280 IMU Sensor Related Functions. */
+static uint8_t GetBME280ChipId(void);
+static uint32_t GetBME280Pressure(void);
+static void EnableBME280(void);
+
+/******************************************************************************
+ * Function Definitions.
+ *****************************************************************************/
+
+/******************************************************************************
+ * @brief : Function For Initializing TI Booster Pack.
+ * 			Initialization Consist of Initializing the communication
+ * 			peripheral (I2C).
+ *
+ * @fn : InitTiSensorBooster()
+ *
+ * @param[in] : None
+ *
+ * @param[out] : None.
+ *
+ * @return : None
+ *
+ *****************************************************************************/
+void InitTiSensorBooster(void)
+{
+	/* Initialize the I2C Peripheral. */
+	MX_I2C1_Init();
+
+	/* Enable The gyroscope. */
+    BMI160_EnableGyro();
+
+	/* Enable The Accelerometer. */
+    BMI160_EnableAccel();
+}
+
+/******************************************************************************
+ * @brief : Function For Reading the values from OPT3001 Light Sensor present
+ * 			in TI Sensor Booster Pack.
+ *
+ * @fn : GetOPT3001Vals(eOpt3001Vals eOpt3001Val)
+ *
+ * @param[in] : eOpt3001Res   - To Read Light Sensor Result.
+ * @param[in] : eOpt3001MfId  - To Read Light Sensor MF ID.
+ * @param[in] : eOpt3001DevId - To Read Light Sensor Device ID.
+ *
+ * @param[out] : uint16_t - Result for the corresponding argument selected
+ * 							by the user.
+ *
+ * @return : None
+ *
+ *****************************************************************************/
+uint16_t GetOPT3001Vals(eOpt3001Vals eOpt3001Val)
+{
+	/* Variable Initialization. */
+	uint16_t uhOpt3001Res = 0;
+
+	/* Validity check. */
+	if((eOpt3001Val >= eOpt3001Res)
+	&& (eOpt3001Val < eOpt3001Max))
+	{
+		/* Switch for the corresponding value. */
+		switch(eOpt3001Val)
+		{
+			/* Get the light sensor result. */
+			case eOpt3001Res:
+			{
+				uhOpt3001Res = GetOPT3001LightRes();
+				break;
+			}
+
+			/* Get the Manufacture ID. */
+			case eOpt3001MfId:
+			{
+				uhOpt3001Res = GetOPT3001MfId();
+				break;
+			}
+
+			/* Get the Device ID. */
+			case eOpt3001DevId:
+			{
+				uhOpt3001Res = GetOPT3001DevId();
+				break;
+			}
+
+			/* Exit. */
+			default:
+			{
+				break;
+			}
+		}
+	}
+
+	/* Return the result. */
+	return uhOpt3001Res;
+}
+
+/******************************************************************************
+ * @brief : Function For Reading the values from BMI160 IMU Sensor present
+ * 			in TI Sensor Booster Pack.
+ *
+ * @fn : GetOPT3001Vals(eOpt3001Vals eOpt3001Val)
+ *
+ * @param[in] : eBmi160ChipId   - To Read Chip ID of BMI160 Sensor.
+ *
+ * @param[out] : uint16_t - Result for the corresponding argument selected
+ * 							by the user.
+ *
+ * @return : None
+ *
+ *****************************************************************************/
+uint16_t GetBMI160IMUVals(eBmi160ImuVals eBmi160Val)
+{
+	/* Variable Initialization. */
+	uint16_t uhBmi160Res = 0;
+
+	/* Validation Check. */
+	if((eBmi160Val >= eBmi160ChipId)
+	&& (eBmi160Val < eBmi160Max))
+	{
+		/* Switch to the corresponding option. */
+		switch(eBmi160Val)
+		{
+			/* Read the chip ID. */
+			case eBmi160ChipId:
+			{
+				uhBmi160Res = (uint16_t)GetBMI160ChipId();
+
+				break;
+			}
+
+			/* Read the Magnetometer x axes . */
+			case eBmi160MagX:
+			{
+				uhBmi160Res = GetBMI160MagnetoMeterXAxes();
+
+				break;
+			}
+
+			/* Read the Gyroscope x axes . */
+			case eBmi160GyrX:
+			{
+				uhBmi160Res = GetGyroScopeXAxes();
+
+				break;
+			}
+
+			/* Read the Gyroscope y axes . */
+			case eBmi160GyrY:
+			{
+				uhBmi160Res = GetGyroScopeYAxes();
+
+				break;
+			}
+
+			/* Read the Gyroscope Z axes . */
+			case eBmi160GyrZ:
+			{
+				uhBmi160Res = GetGyroScopeZAxes();
+
+				break;
+			}
+
+			/* Read the Accelerometer X axes . */
+			case eBmi160AccelX:
+			{
+				uhBmi160Res = GetAccelXAxes();
+
+				break;
+			}
+
+			/* Read the Accelerometer X axes . */
+			case eBmi160AccelY:
+			{
+				uhBmi160Res = GetAccelYAxes();
+
+				break;
+			}
+
+			/* Read the Accelerometer X axes . */
+			case eBmi160AccelZ:
+			{
+				uhBmi160Res = GetAccelZAxes();
+
+				break;
+			}
+
+			default:
+			{
+				break;
+			}
+		}
+	}
+
+	/* Return the result. */
+	return uhBmi160Res;
+}
+
+/******************************************************************************
+ * @brief : Function For Reading the values from BMI160 IMU Sensor present
+ * 			in TI Sensor Booster Pack.
+ *
+ * @fn : GetOPT3001Vals(eOpt3001Vals eOpt3001Val)
+ *
+ * @param[in] : eBmi160ChipId   - To Read Chip ID of BMI160 Sensor.
+ *
+ * @param[out] : uint16_t - Result for the corresponding argument selected
+ * 							by the user.
+ *
+ * @return : None
+ *
+ *****************************************************************************/
+uint32_t GetBME280Vals(eBme280Vals eBme280Val)
+{
+	/* Variable initialization. */
+	uint32_t uiRes = 0;
+
+	/* Validity Check. */
+	if((eBme280Val >= eBme280ChipId)
+	&& (eBme280Val < eBme280Max))
+	{
+		/* Switch to the corresponding option. */
+		switch(eBme280Val)
+		{
+			case eBme280ChipId:
+			{
+				uiRes = (uint32_t)GetBME280ChipId();
+				break;
+			}
+
+			case eBme280Pressure:
+			{
+				uiRes = GetBME280Pressure();
+				break;
+			}
+
+			case eBme280Humidity:
+			{
+				break;
+			}
+
+			case eBme280Temperature:
+			{
+				break;
+			}
+
+			default:
+			{
+				break;
+			}
+		}
+	}
+
+	/* Return the result. */
+	return uiRes;
+}
+
+/******************************************************************************
+ * @brief : Function For reading the manufacture ID of OPT3001 Light Sensor
+ * 			present in TI Sensor Booster pack.
+ *
+ * @fn : GetOPT3001MfId()
+ *
+ * @param[in] : None
+ *
+ * @param[out] : uint16_t - Manufacture ID.
+ *
+ * @return : None
+ *
+ *****************************************************************************/
+static uint16_t GetOPT3001MfId(void)
+{
+    uint8_t tx_data[1] = {REG_OPT3001_MFID};
+    uint8_t rx_data[2] = {0};
+    uint16_t result = 0;
+
+    // Step 1: Write register address to read from
+    if (HAL_I2C_Master_Transmit(&hi2c1, I2C_OPT3001_SLAVE_ADDR << 1,
+                               tx_data, 1, 100) != HAL_OK) {
+        return 0xFFFF;
+    }
+
+    // Step 2: Read the register data (2 bytes)
+    if (HAL_I2C_Master_Receive(&hi2c1, I2C_OPT3001_SLAVE_ADDR << 1,
+                              rx_data, 2, 100) != HAL_OK) {
+        return 0xFFFF;
+    }
+
+    // Combine bytes (OPT3001 is big-endian)
+    result = (rx_data[0] << 8) | rx_data[1];
+
+    return result;
+}
+
+/******************************************************************************
+ * @brief : Function For reading the Device ID of OPT3001 Light Sensor
+ * 			present in TI Sensor Booster pack.
+ *
+ * @fn : GetOPT3001DevId()
+ *
+ * @param[in] : None
+ *
+ * @param[out] : uint16_t - Device ID.
+ *
+ * @return : None
+ *
+ *****************************************************************************/
+static uint16_t GetOPT3001DevId(void)
+{
+    uint8_t ucTxData[1] = {REG_OPT300_DEVID};
+    uint8_t ucRxData[2] = {0};
+    uint16_t uhResult 	= 0;
+
+    /* Step 1: Write register address to read from. */
+    if(HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, I2C_OPT3001_SLAVE_ADDR << 1,
+                               ucTxData, 1, 100) )
+    {
+    	/* Step 2: Read the register data (2 bytes) */
+    	if(HAL_OK == HAL_I2C_Master_Receive(&hi2c1, I2C_OPT3001_SLAVE_ADDR << 1,
+                              ucRxData, 2, 100))
+    	{
+    		/* Combine the result. (OPT3001 is Big Endian. */
+    	    uhResult = (ucRxData[0] << 8) | ucRxData[1];
+    	}
+    }
+
+    /* Return the result. */
+    return uhResult;
+}
+
+/******************************************************************************
+ * @brief : Function For reading the Result  of OPT3001 Light Sensor
+ * 			present in TI Sensor Booster pack.
+ *
+ * @fn : GetOPT3001LightRes()
+ *
+ * @param[in] : None
+ *
+ * @param[out] : uint16_t - Light Sensor Result.
+ *
+ * @return : None
+ *
+ *****************************************************************************/
+static uint16_t GetOPT3001LightRes(void)
+{
+    uint8_t ucTxData[3] = {0};
+    uint8_t ucRxData[2] = {0};
+    uint16_t uhResult = 0;
+    uint16_t uhConfig = 0xCA10;  // Single-shot, 800ms
+
+    ucTxData[0] = REG_OPT3001_CONFIG;
+    ucTxData[1] = (uhConfig >> 8) & 0xFF;
+    ucTxData[2] = uhConfig & 0xFF;
+
+    /* Step 1: Configure sensor using sequential write */
+    if(HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, I2C_OPT3001_SLAVE_ADDR << 1,
+                               ucTxData, 3, 100))
+    {
+        /* Step 2: Wait for conversion */
+        HAL_Delay(850);
+
+        /* Step 3: Read result using sequential read */
+        ucTxData[0] = REG_OPT3001_RES;
+
+        if(HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, I2C_OPT3001_SLAVE_ADDR << 1,
+                                   ucTxData, 1, 100))
+        {
+            if(HAL_OK == HAL_I2C_Master_Receive(&hi2c1, I2C_OPT3001_SLAVE_ADDR << 1,
+                                      ucRxData, 2, 100))
+            {
+                uhResult = (ucRxData[0] << 8) | ucRxData[1];
+            }
+        }
+    }
+
+    /* Return the result. */
+    return uhResult;
+}
+
+/******************************************************************************
+ * @brief : Function For reading the Chip ID of BMI160 IMU sensor
+ * 			present in TI Sensor Booster pack.
+ *
+ * @fn : GetBMI160ChipId()
+ *
+ * @param[in] : None
+ *
+ * @param[out] : uint8_t - Chip ID of BMI160 IMU sensor.
+ *
+ * @return : None
+ *
+ *****************************************************************************/
+static uint8_t GetBMI160ChipId(void)
+{
+    uint8_t ucTxData[1] = {BMI160_CHIPID};
+    uint8_t ucRxData[1] = {0};
+    uint8_t uhResult 	= 0;
+
+    /* Step 1: Write register address to read from. */
+    if(HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                               ucTxData, 1, 100) )
+    {
+    	/* Step 2: Read the register data (2 bytes) */
+    	if(HAL_OK == HAL_I2C_Master_Receive(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                              ucRxData, 1, 100))
+    	{
+    		/* Combine the result. (OPT3001 is Big Endian. */
+    	    uhResult = ucRxData[0];
+    	}
+    }
+
+    /* Return the result. */
+    return uhResult;
+}
+
+/******************************************************************************
+ * @brief : Function For reading the Chip ID of BMI160 IMU sensor
+ * 			present in TI Sensor Booster pack.
+ *
+ * @fn : GetBMI160ChipId()
+ *
+ * @param[in] : None
+ *
+ * @param[out] : uint8_t - Chip ID of BMI160 IMU sensor.
+ *
+ * @return : None
+ *
+ *****************************************************************************/
+static uint16_t GetBMI160MagnetoMeterXAxes(void)
+{
+    uint8_t ucTxData[1] = {BMI160_MAG_X_REG};
+    uint8_t ucRxData[2] = {0};
+    uint8_t uhResult 	= 0;
+
+    BMI160_InitMagnetometer();
+
+    /* Step 1: Write register address to read from. */
+    if(HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                               ucTxData, 1, 100) )
+    {
+    	/* Step 2: Read the register data (2 bytes) */
+    	if(HAL_OK == HAL_I2C_Master_Receive(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                              ucRxData, 2, 100))
+    	{
+    		/* Combine the result. (OPT3001 is Big Endian. */
+            uhResult = (uint16_t)((ucRxData[1] << 8) | ucRxData[0]);
+    	}
+    }
+
+    /* Return the result. */
+    return uhResult;
+}
+
+/******************************************************************************
+ * @brief : Function For reading the Chip ID of BMI160 IMU sensor
+ * 			present in TI Sensor Booster pack.
+ *
+ * @fn : GetBMI160ChipId()
+ *
+ * @param[in] : None
+ *
+ * @param[out] : uint8_t - Chip ID of BMI160 IMU sensor.
+ *
+ * @return : None
+ *
+ *****************************************************************************/
+static void BMI160_InitMagnetometer(void)
+{
+    uint8_t data[2] = {0x7E,0x19};
+
+    HAL_I2C_Master_Transmit(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                                   data, 2, 100);
+
+    HAL_Delay(50);
+
+    data[0] = 0x4B;
+    data[1] = 0x01;
+
+    HAL_I2C_Master_Transmit(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                                   data, 2, 100);
+
+    HAL_Delay(50);
+
+    data[0] = 0x4C;
+    data[1] = 0x02;
+
+    HAL_I2C_Master_Transmit(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                                   data, 2, 100);
+
+    HAL_Delay(50);
+
+    data[0] = 0x4D;
+    data[1] = (BMM150_I2C_ADDR << 1) | 1;
+
+    HAL_I2C_Master_Transmit(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                                   data, 2, 100);
+
+    HAL_Delay(50);
+
+    return;
+}
+
+/******************************************************************************
+ * @brief : Function For reading the Chip ID of BMI160 IMU sensor
+ * 			present in TI Sensor Booster pack.
+ *
+ * @fn : GetBMI160ChipId()
+ *
+ * @param[in] : None
+ *
+ * @param[out] : uint8_t - Chip ID of BMI160 IMU sensor.
+ *
+ * @return : None
+ *
+ *****************************************************************************/
+static void EnableBME280(void)
+{
+    uint8_t cmdData[2] = {BME280_CTRL_HUMD_REG, 0x01};
+
+    HAL_I2C_Master_Transmit(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1, cmdData, 2, 100);
+    HAL_Delay(50);
+
+    cmdData[0] = BME280_CTRL_MEAS_REG;
+    cmdData[1] = 0x27;
+
+    HAL_I2C_Master_Transmit(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1, cmdData, 2, 100);
+    HAL_Delay(50);
+
+    return;
+}
+
+/******************************************************************************
+ * @brief : Function For reading the gyroscope value along X axes
+ * 			present in TI Sensor Booster pack.
+ *
+ * @fn : GetGyroScopeXAxes()
+ *
+ * @param[in] : None
+ *
+ * @param[out] : uint16_t - X axes Gyroscope value of BMI160 IMU sensor.
+ *
+ * @return : None
+ *
+ *****************************************************************************/
+static uint16_t GetGyroScopeXAxes(void)
+{
+    uint8_t ucTxData[1] = {BMI_GYRO_X_REG};
+    uint8_t ucRxData[2] = {0};
+    uint16_t uhResult 	= 0;
+
+    /* Step 1: Write register address to read from. */
+    if(HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                               ucTxData, 1, 100) )
+    {
+    	/* Step 2: Read the register data (2 bytes) */
+    	if(HAL_OK == HAL_I2C_Master_Receive(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                              ucRxData, 1, 100))
+    	{
+    		/* Combine the result. (OPT3001 is Big Endian. */
+    	    uhResult = ucRxData[0];
+    	}
+    }
+
+    ucTxData[0] = BMI_GYRO_X_REG + 1;
+    /* Step 1: Write register address to read from. */
+    if(HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                               ucTxData, 1, 100) )
+    {
+    	/* Step 2: Read the register data (2 bytes) */
+    	if(HAL_OK == HAL_I2C_Master_Receive(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                              &ucRxData[1], 1, 100))
+    	{
+    		memcpy(&uhResult,ucRxData, 2);
+    	}
+    }
+
+    /* Return the result. */
+    return uhResult;
+}
+
+/******************************************************************************
+ * @brief : Function For reading the gyroscope value along Y axes
+ * 			present in TI Sensor Booster pack.
+ *
+ * @fn : GetGyroScopeYAxes()
+ *
+ * @param[in] : None
+ *
+ * @param[out] : uint16_t - Y axes Gyroscope value of BMI160 IMU sensor.
+ *
+ * @return : None
+ *
+ *****************************************************************************/
+static uint16_t GetGyroScopeYAxes(void)
+{
+    uint8_t ucTxData[1] = {BMI_GYRO_Y_REG};
+    uint8_t ucRxData[2] = {0};
+    uint16_t uhResult 	= 0;
+
+    /* Step 1: Write register address to read from. */
+    if(HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                               ucTxData, 1, 100) )
+    {
+    	/* Step 2: Read the register data (2 bytes) */
+    	if(HAL_OK == HAL_I2C_Master_Receive(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                              ucRxData, 1, 100))
+    	{
+    		/* Combine the result. (OPT3001 is Big Endian. */
+    	    uhResult = ucRxData[0];
+    	}
+    }
+
+    ucTxData[0] = BMI_GYRO_Y_REG + 1;
+    /* Step 1: Write register address to read from. */
+    if(HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                               ucTxData, 1, 100) )
+    {
+    	/* Step 2: Read the register data (2 bytes) */
+    	if(HAL_OK == HAL_I2C_Master_Receive(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                              &ucRxData[1], 1, 100))
+    	{
+    		memcpy(&uhResult,ucRxData, 2);
+    	}
+    }
+
+    /* Return the result. */
+    return uhResult;
+}
+
+/******************************************************************************
+ * @brief : Function For reading the gyroscope value along Z axes
+ * 			present in TI Sensor Booster pack.
+ *
+ * @fn : GetGyroScopeZAxes()
+ *
+ * @param[in] : None
+ *
+ * @param[out] : uint16_t - Z axes Gyroscope value of BMI160 IMU sensor.
+ *
+ * @return : None
+ *
+ *****************************************************************************/
+static uint16_t GetGyroScopeZAxes(void)
+{
+    uint8_t ucTxData[1] = {BMI_GYRO_Z_REG};
+    uint8_t ucRxData[2] = {0};
+    uint16_t uhResult 	= 0;
+
+    /* Step 1: Write register address to read from. */
+    if(HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                               ucTxData, 1, 100) )
+    {
+    	/* Step 2: Read the register data (2 bytes) */
+    	if(HAL_OK == HAL_I2C_Master_Receive(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                              ucRxData, 1, 100))
+    	{
+    		/* Combine the result. (OPT3001 is Big Endian. */
+    	    uhResult = ucRxData[0];
+    	}
+    }
+
+    ucTxData[0] = BMI_GYRO_Z_REG + 1;
+    /* Step 1: Write register address to read from. */
+    if(HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                               ucTxData, 1, 100) )
+    {
+    	/* Step 2: Read the register data (2 bytes) */
+    	if(HAL_OK == HAL_I2C_Master_Receive(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                              &ucRxData[1], 1, 100))
+    	{
+    		memcpy(&uhResult,ucRxData, 2);
+    	}
+    }
+
+    /* Return the result. */
+    return uhResult;
+}
+
+/******************************************************************************
+ * @brief : Function For reading the Accelerometer value along X axes
+ * 			present in TI Sensor Booster pack.
+ *
+ * @fn : GetAccelXAxes()
+ *
+ * @param[in] : None
+ *
+ * @param[out] : uint16_t - X axes Accelerometer value of BMI160 IMU sensor.
+ *
+ * @return : None
+ *
+ *****************************************************************************/
+static uint16_t GetAccelXAxes(void)
+{
+    uint8_t ucTxData[1] = {BMI_ACCEL_X_REG};
+    uint8_t ucRxData[2] = {0};
+    uint16_t uhResult 	= 0;
+
+    /* Step 1: Write register address to read from. */
+    if(HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                               ucTxData, 1, 100) )
+    {
+    	/* Step 2: Read the register data (2 bytes) */
+    	if(HAL_OK == HAL_I2C_Master_Receive(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                              ucRxData, 1, 100))
+    	{
+    		/* Combine the result. (OPT3001 is Big Endian. */
+    	    uhResult = ucRxData[0];
+    	}
+    }
+
+    ucTxData[0] = BMI_ACCEL_X_REG + 1;
+    /* Step 1: Write register address to read from. */
+    if(HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                               ucTxData, 1, 100) )
+    {
+    	/* Step 2: Read the register data (2 bytes) */
+    	if(HAL_OK == HAL_I2C_Master_Receive(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                              &ucRxData[1], 1, 100))
+    	{
+    		memcpy(&uhResult,ucRxData, 2);
+    	}
+    }
+
+    /* Return the result. */
+    return uhResult;
+}
+
+/******************************************************************************
+ * @brief : Function For reading the Accelerometer value along Y axes
+ * 			present in TI Sensor Booster pack.
+ *
+ * @fn : GetAccelYAxes()
+ *
+ * @param[in] : None
+ *
+ * @param[out] : uint16_t - Y axes Accelerometer value of BMI160 IMU sensor.
+ *
+ * @return : None
+ *
+ *****************************************************************************/
+static uint16_t GetAccelYAxes(void)
+{
+    uint8_t ucTxData[1] = {BMI_ACCEL_Y_REG};
+    uint8_t ucRxData[2] = {0};
+    uint16_t uhResult 	= 0;
+
+    /* Step 1: Write register address to read from. */
+    if(HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                               ucTxData, 1, 100) )
+    {
+    	/* Step 2: Read the register data (2 bytes) */
+    	if(HAL_OK == HAL_I2C_Master_Receive(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                              ucRxData, 1, 100))
+    	{
+    		/* Combine the result. (OPT3001 is Big Endian. */
+    	    uhResult = ucRxData[0];
+    	}
+    }
+
+    ucTxData[0] = BMI_ACCEL_Y_REG + 1;
+    /* Step 1: Write register address to read from. */
+    if(HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                               ucTxData, 1, 100) )
+    {
+    	/* Step 2: Read the register data (2 bytes) */
+    	if(HAL_OK == HAL_I2C_Master_Receive(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                              &ucRxData[1], 1, 100))
+    	{
+    		memcpy(&uhResult,ucRxData, 2);
+    	}
+    }
+
+    /* Return the result. */
+    return uhResult;
+}
+
+/******************************************************************************
+ * @brief : Function For reading the Accelerometer value along Z axes
+ * 			present in TI Sensor Booster pack.
+ *
+ * @fn : GetAccelZAxes()
+ *
+ * @param[in] : None
+ *
+ * @param[out] : uint16_t - Z axes Accelerometer value of BMI160 IMU sensor.
+ *
+ * @return : None
+ *
+ *****************************************************************************/
+static uint16_t GetAccelZAxes(void)
+{
+    uint8_t ucTxData[1] = {BMI_ACCEL_Z_REG};
+    uint8_t ucRxData[2] = {0};
+    uint16_t uhResult 	= 0;
+
+    /* Step 1: Write register address to read from. */
+    if(HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                               ucTxData, 1, 100) )
+    {
+    	/* Step 2: Read the register data (2 bytes) */
+    	if(HAL_OK == HAL_I2C_Master_Receive(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                              ucRxData, 1, 100))
+    	{
+    		/* Combine the result. (OPT3001 is Big Endian. */
+    	    uhResult = ucRxData[0];
+    	}
+    }
+
+    ucTxData[0] = BMI_ACCEL_Z_REG + 1;
+    /* Step 1: Write register address to read from. */
+    if(HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                               ucTxData, 1, 100) )
+    {
+    	/* Step 2: Read the register data (2 bytes) */
+    	if(HAL_OK == HAL_I2C_Master_Receive(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1,
+                              &ucRxData[1], 1, 100))
+    	{
+    		memcpy(&uhResult,ucRxData, 2);
+    	}
+    }
+
+    /* Return the result. */
+    return uhResult;
+}
+
+/******************************************************************************
+ * @brief : Function For reading the Chip ID of BME280 environmental sensor
+ * 			present in TI Sensor Booster pack.
+ *
+ * @fn : GetBME280ChipId()
+ *
+ * @param[in] : None
+ *
+ * @param[out] : uint8_t - Chip ID of BME280.
+ *
+ * @return : None
+ *
+ *****************************************************************************/
+static uint8_t GetBME280ChipId(void)
+{
+    uint8_t ucTxData[1] = {BME280_CHIPID_REG};
+    uint8_t ucRxData[1] = {0};
+    uint8_t uhResult 	= 0;
+
+    /* Step 1: Write register address to read from. */
+    if(HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, I2C_BME280_SLAVE_ADDR << 1,
+                               ucTxData, 1, 100) )
+    {
+    	/* Step 2: Read the register data (2 bytes) */
+    	if(HAL_OK == HAL_I2C_Master_Receive(&hi2c1, I2C_BME280_SLAVE_ADDR << 1,
+                              ucRxData, 1, 100))
+    	{
+    		/* Combine the result. (OPT3001 is Big Endian. */
+    	    uhResult = ucRxData[0];
+    	}
+    }
+
+    /* Return the result. */
+    return uhResult;
+}
+
+/******************************************************************************
+ * @brief : Function For reading the pressure value from BME280 environmental
+ * 		    sensor present in TI Sensor Booster pack.
+ *
+ * @fn : GetBME280Pressure()
+ *
+ * @param[in] : None
+ *
+ * @param[out] : uint32_t - Pressure value read from BME280.
+ *
+ * @return : None
+ *
+ *****************************************************************************/
+static uint32_t GetBME280Pressure(void)
+{
+	/* Variable Initialization. */
+	uint8_t ucTxData[1] = {BME280_PRESS_REG};
+	uint8_t ucPressureVal[3] = {0};
+	uint32_t uiResult = 0;
+
+    /* Step 1: Write register address to read from. */
+    if(HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, I2C_BME280_SLAVE_ADDR << 1,
+                               ucTxData, 1, 100) )
+    {
+    	/* Step 2: Read the register data (2 bytes) */
+    	if(HAL_OK == HAL_I2C_Master_Receive(&hi2c1, I2C_BME280_SLAVE_ADDR << 1,
+    			ucPressureVal, 1, 100))
+    	{
+    		/* Combine the result. (OPT3001 is Big Endian. */
+    		uiResult = ucPressureVal[0];
+    	}
+    }
+
+    ucTxData[0] = BME280_PRESS_REG + 1;
+
+    /* Step 1: Write register address to read from. */
+    if(HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, I2C_BME280_SLAVE_ADDR << 1,
+                               ucTxData, 1, 100) )
+    {
+    	/* Step 2: Read the register data (2 bytes) */
+    	if(HAL_OK == HAL_I2C_Master_Receive(&hi2c1, I2C_BME280_SLAVE_ADDR << 1,
+                              &ucPressureVal[1], 1, 100))
+    	{
+    		/* Combine the result. (OPT3001 is Big Endian. */
+    		uiResult = ucPressureVal[0];
+    	}
+    }
+
+    ucTxData[0] = BME280_PRESS_REG + 2;
+
+    /* Step 1: Write register address to read from. */
+    if(HAL_OK == HAL_I2C_Master_Transmit(&hi2c1, I2C_BME280_SLAVE_ADDR << 1,
+                               ucTxData, 1, 100) )
+    {
+    	/* Step 2: Read the register data (2 bytes) */
+    	if(HAL_OK == HAL_I2C_Master_Receive(&hi2c1, I2C_BME280_SLAVE_ADDR << 1,
+                              &ucPressureVal[2], 1, 100))
+    	{
+    		/* Combine the result. (OPT3001 is Big Endian. */
+    		uiResult = ucPressureVal[0];
+
+    		ucPressureVal[2] = ucPressureVal[2] & 0xF0;
+    	}
+    }
+
+    /* Copy the result. */
+    memcpy(&uiResult, ucPressureVal,3);
+
+    return uiResult;
+
+}
+
+/******************************************************************************
+ * @brief : Function For enabling gyroscope resent in TI Sensor Booster pack.
+ *
+ * @fn : BMI160_EnableGyro()
+ *
+ * @param[in] : None
+ *
+ * @param[out] : None.
+ *
+ * @return : None
+ *
+ *****************************************************************************/
+static void BMI160_EnableGyro(void)
+{
+	/* Command register , Gyroscope in Normal mode. */
+    uint8_t cmdData[2] = {0x7E, 0x15};  // CMD register, Gyro Normal Mode
+
+    HAL_I2C_Master_Transmit(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1, cmdData, 2, 100);
+    HAL_Delay(50);
+
+    return;
+}
+
+/******************************************************************************
+ * @brief : Function For enabling Accelerometer resent in TI Sensor Booster pack.
+ *
+ * @fn : BMI160_EnableAccel()
+ *
+ * @param[in] : None
+ *
+ * @param[out] : None.
+ *
+ * @return : None
+ *
+ *****************************************************************************/
+static void BMI160_EnableAccel(void)
+{
+	/* Command register , Gyroscope in Normal mode. */
+    uint8_t cmdData[2] = {0x7E, 0x11};  // CMD register, Gyro Normal Mode
+
+    HAL_I2C_Master_Transmit(&hi2c1, I2C_BMI160_SLAVE_ADDR << 1, cmdData, 2, 100);
+    HAL_Delay(50);
+
+    return;
+}
+
+/******************************************************************************
+ * @brief : Function For Initializing TI Booster Pack.
+ * 			Initialization Consist of Initializing the communication
+ * 			peripheral (I2C).
+ *
+ * @fn : InitTiSensorBooster()
+ *
+ * @param[in] : None
+ *
+ * @param[out] : None.
+ *
+ * @return : None
+ *
+ *****************************************************************************/
+static void MX_I2C1_Init(void)
+{
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.Timing = 0x10909CEC;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    //Error_Handler();
+  }
+
+  /** Configure Analogue filter
+  */
+  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+  {
+    //Error_Handler();
+  }
+
+  /** Configure Digital filter
+  */
+  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
+  {
+    //Error_Handler();
+  }
+
+  return;
+}

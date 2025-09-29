@@ -1,0 +1,54 @@
+!SESSION 2025-09-26 10:35:23.827 -----------------------------------------------
+eclipse.buildId=Version 1.14.0
+java.version=17.0.8.1
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=en_IN
+Command-line arguments:  -os win32 -ws win32 -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2025-09-26 10:35:56.446
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2025-09-26 10:35:56.467
+!MESSAGE Log4j2 initialized with config file D:\BITSILICA\SALMAN\Learning\STM32\STM32_Projects\STM32L4xx_TI_Sensors\.metadata\.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2025-09-26 10:36:01.243
+!MESSAGE Started RMI Server, listening on port 41337
+
+!ENTRY org.eclipse.cdt.core 1 0 2025-09-26 10:37:50.756
+!MESSAGE Indexed 'STM32L4xx_Ti_Sensors' (25 sources, 82 headers) in 5.68 sec: 5,459 declarations; 29,399 references; 0 unresolved inclusions; 1 syntax errors; 2 unresolved names (0.0057%)
+
+!ENTRY org.eclipse.cdt.core 1 0 2025-09-26 11:04:49.802
+!MESSAGE Indexed 'STM32L4xx_Ti_Sensors' (25 sources, 84 headers) in 2.1 sec: 6,261 declarations; 40,149 references; 0 unresolved inclusions; 1 syntax errors; 2 unresolved names (0.0043%)
+!SESSION 2025-09-29 09:29:18.795 -----------------------------------------------
+eclipse.buildId=Version 1.14.0
+java.version=17.0.8.1
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=en_IN
+Command-line arguments:  -os win32 -ws win32 -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2025-09-29 09:29:55.674
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2025-09-29 09:29:55.687
+!MESSAGE Log4j2 initialized with config file D:\BITSILICA\SALMAN\Learning\STM32\STM32_Projects\STM32L4xx_TI_Sensors\.metadata\.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2025-09-29 09:30:05.727
+!MESSAGE Started RMI Server, listening on port 41337
+!SESSION 2025-09-29 16:36:34.483 -----------------------------------------------
+eclipse.buildId=Version 1.14.0
+java.version=17.0.8.1
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=en_IN
+Command-line arguments:  -os win32 -ws win32 -arch x86_64
+
+!ENTRY org.eclipse.core.resources 2 10035 2025-09-29 16:36:44.559
+!MESSAGE The workspace exited with unsaved changes in the previous session; refreshing workspace to recover changes.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2025-09-29 16:37:14.825
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2025-09-29 16:37:14.847
+!MESSAGE Log4j2 initialized with config file D:\BITSILICA\SALMAN\Learning\STM32\STM32_Projects\STM32L4xx_TI_Sensors\.metadata\.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2025-09-29 16:37:32.783
+!MESSAGE Started RMI Server, listening on port 41337
