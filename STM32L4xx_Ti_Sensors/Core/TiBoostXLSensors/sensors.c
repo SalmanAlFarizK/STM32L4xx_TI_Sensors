@@ -280,6 +280,7 @@ uint16_t GetBMI160IMUVals(eBmi160ImuVals eBmi160Val)
 				break;
 			}
 
+			/* Exit. */
 			default:
 			{
 				break;
@@ -317,30 +318,35 @@ uint32_t GetBME280Vals(eBme280Vals eBme280Val)
 		/* Switch to the corresponding option. */
 		switch(eBme280Val)
 		{
+			/* Read the ChipID. */
 			case eBme280ChipId:
 			{
 				uiRes = (uint32_t)GetBME280ChipId();
 				break;
 			}
 
+			/* Read the pressure value. */
 			case eBme280Pressure:
 			{
 				uiRes = GetBME280Pressure();
 				break;
 			}
 
+			/* Read the humidity value. */
 			case eBme280Humidity:
 			{
 				uiRes = (uint32_t)GetBME280Humidity();
 				break;
 			}
 
+			/* Read the temperature value. */
 			case eBme280Temperature:
 			{
 				uiRes = GetBME280Temperature();
 				break;
 			}
 
+			/* Exit. */
 			default:
 			{
 				break;

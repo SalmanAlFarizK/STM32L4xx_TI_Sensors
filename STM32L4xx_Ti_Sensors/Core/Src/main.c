@@ -19,8 +19,10 @@
 /* Includes ------------------------------------------------------------------*/
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "main.h"
 #include "sensors.h"
+#include "flash.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -34,6 +36,21 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#pragma pack(1)
+typedef struct _TiBoosterPackSensors_
+{
+	uint16_t uhLightIntensity;
+	uint16_t uhGyroX;
+	uint16_t uhGyroY;
+	uint16_t uhGyroZ;
+	uint16_t uhAccelX;
+	uint16_t uhAccelY;
+	uint16_t uhAccelZ;
+	uint32_t uiPressure;
+	uint32_t uiHumidity;
+	uint32_t uiTemp;
+} TiBoosterPackSensors;
+#pragma pack()
 
 /* USER CODE END PD */
 
@@ -47,6 +64,7 @@
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+TiBoosterPackSensors tTiSensorVals;
 
 /* USER CODE END PV */
 
@@ -55,6 +73,10 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
+
+static void GetBoosterSensorVals(void);
+static void SaveSensorValsToFlash(void);
+static void ReadSensorValFromFlash(void);
 
 /* USER CODE END PFP */
 
@@ -69,11 +91,6 @@ static void MX_USART2_UART_Init(void);
   */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
-	uint16_t uhMfId = 0;
-	uint8_t ucTxDataBuff[100] = {0};
-	uint16_t uhTxDataSize = 0;
-
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -87,8 +104,6 @@ int main(void)
 
   /* Configure the system clock */
   SystemClock_Config();
-
-  /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
 
@@ -105,13 +120,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  uhMfId = GetBME280Vals(eBme280Temperature);
 
-	  uhTxDataSize = sprintf((char*)ucTxDataBuff, "The Temperature value is %X\r\n",uhMfId);
+	  GetBoosterSensorVals();
 
-	  HAL_UART_Transmit(&huart2, ucTxDataBuff, uhTxDataSize, 10);
+	  SaveSensorValsToFlash();
 
-	  HAL_Delay(100);
+	  ReadSensorValFromFlash();
+
+	  HAL_Delay(1000);
 	  /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -247,6 +263,72 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+static void GetBoosterSensorVals(void)
+{
+	/* Fetch all the values from TI Sensor Booster Packs. */
+	tTiSensorVals.uhLightIntensity 	= GetOPT3001Vals(eOpt3001Res);
+	tTiSensorVals.uhGyroX 			= GetBMI160IMUVals(eBmi160GyrX);
+	tTiSensorVals.uhGyroX 			= GetBMI160IMUVals(eBmi160GyrX);
+	tTiSensorVals.uhGyroY 			= GetBMI160IMUVals(eBmi160GyrY);
+	tTiSensorVals.uhGyroZ 			= GetBMI160IMUVals(eBmi160GyrZ);
+	tTiSensorVals.uhAccelX 			= GetBMI160IMUVals(eBmi160AccelX);
+	tTiSensorVals.uhAccelY 			= GetBMI160IMUVals(eBmi160AccelY);
+	tTiSensorVals.uhAccelZ 			= GetBMI160IMUVals(eBmi160AccelZ);
+	tTiSensorVals.uiHumidity		= GetBME280Vals(eBme280Humidity);
+	tTiSensorVals.uiPressure		= GetBME280Vals(eBme280Pressure);
+	tTiSensorVals.uiTemp			= GetBME280Vals(eBme280Temperature);
+
+	return;
+}
+
+static void SaveSensorValsToFlash(void)
+{
+	uint8_t ucTxBuffer[100] = {0};
+	uint16_t uhTxSize = 0;
+
+	if(eFlashSuccess == FlashWriteData((uint8_t*)&tTiSensorVals,
+			sizeof(tTiSensorVals), USER_DATA_START_ADDR))
+	{
+		uhTxSize = sprintf((char*)ucTxBuffer,"Successfully Saved to flash memory\r\n");
+	}
+	else
+	{
+		uhTxSize = sprintf((char*)ucTxBuffer,"Error in saving to flash memory\r\n");
+	}
+
+	HAL_UART_Transmit(&huart2, ucTxBuffer, uhTxSize, 10);
+
+	return;
+}
+
+static void ReadSensorValFromFlash(void)
+{
+	uint8_t ucRxBuff[100] = {0};
+	uint8_t ucTxBuff[512] = {0};
+	uint16_t uhTxSize = 0;
+
+	if(eFlashSuccess == FlashReadData(ucRxBuff,
+			sizeof(tTiSensorVals), USER_DATA_START_ADDR))
+	{
+		/* Copy the values loaded from the flash memory. */
+		memcpy(&tTiSensorVals, ucRxBuff, sizeof(tTiSensorVals));
+
+		uhTxSize = sprintf((char*)ucTxBuff,"Light Intensity: %X\nGyro X: %X\nGyro Y: %X\nGyro Z: %X\nAccel X: %X\n"
+				"Accel Y: %X\nAccel Z: %X\nPressure: %lX\nTemperature: %lX\nHumidity: %lX\r\n",
+				tTiSensorVals.uhLightIntensity, tTiSensorVals.uhGyroX, tTiSensorVals.uhGyroY, tTiSensorVals.uhGyroZ,
+				tTiSensorVals.uhAccelX, tTiSensorVals.uhAccelY, tTiSensorVals.uhAccelZ,
+				tTiSensorVals.uiPressure, tTiSensorVals.uiTemp, tTiSensorVals.uiHumidity);
+	}
+	else
+	{
+		uhTxSize = sprintf((char*)ucTxBuff, "Error in reading from flash\r\n");
+	}
+
+	HAL_UART_Transmit(&huart2, ucTxBuff, uhTxSize, 30);
+
+	return;
+}
 
 /* USER CODE END 4 */
 
