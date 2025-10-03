@@ -17,16 +17,15 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include "main.h"
-#include "sensors.h"
-#include "flash.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
+#include <string.h>
+#include "sensors.h"
+#include "flash.h"
+#include "w25qxx.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -91,6 +90,14 @@ static void ReadSensorValFromFlash(void);
   */
 int main(void)
 {
+  /* USER CODE BEGIN 1 */
+	//uint32_t uiJedecId = 0;
+	uint8_t ucTxBuff[256] = {0};
+	uint8_t ucFlashReadBuff[256] = {0};
+	uint16_t uhTxSize = 0;
+	uint8_t ucFlashSaveData[] = "This data is going to be saved to the Winbond External Flash";
+	uint16_t uhSaveSize = sizeof(ucFlashSaveData);
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -105,6 +112,8 @@ int main(void)
   /* Configure the system clock */
   SystemClock_Config();
 
+  /* USER CODE BEGIN SysInit */
+
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -114,21 +123,54 @@ int main(void)
 
   InitTiSensorBooster();
 
+  InitW25QxxFlash();
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+#if 1
+	  if(eExtFlashSuccess == W25QxxFlashWriteData(ucFlashSaveData,
+			  	  	  	  	  uhSaveSize, USER_ADDR_2))
+	  {
+		  uhTxSize = sprintf((char*)ucTxBuff, "Successfully saved\r\n");
+	  }
+	  else
+	  {
+		  uhTxSize = sprintf((char*)ucTxBuff, "Error In saving Data\r\n");
+	  }
 
-	  GetBoosterSensorVals();
-
-	  SaveSensorValsToFlash();
-
-	  ReadSensorValFromFlash();
+	  HAL_UART_Transmit(&huart2, ucTxBuff, uhTxSize, 10);
 
 	  HAL_Delay(1000);
-	  /* USER CODE END WHILE */
+#endif
+
+	  if(eExtFlashSuccess == W25QxxFlashReadData(ucFlashReadBuff,
+			  	  	  	  	  uhSaveSize, USER_ADDR_2))
+	  {
+		  uhTxSize = sprintf((char*)ucTxBuff, "Received : ");
+
+		  memcpy(ucTxBuff + uhTxSize, ucFlashReadBuff, uhSaveSize);
+
+		  uhTxSize += uhSaveSize;
+
+		  ucTxBuff[uhTxSize-1] = '\r';
+
+		  ucTxBuff[uhTxSize] = '\n';
+
+		  uhTxSize += 2;
+	  }
+	  else
+	  {
+		  uhTxSize = sprintf((char*)ucTxBuff, "Error In Reading Data\r\n");
+	  }
+
+	  HAL_UART_Transmit(&huart2, ucTxBuff, uhTxSize, 30);
+
+	  HAL_Delay(1000);
+    /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
@@ -185,12 +227,6 @@ void SystemClock_Config(void)
 }
 
 /**
-  * @brief I2C1 Initialization Function
-  * @param None
-  * @retval None
-  */
-
-/**
   * @brief USART2 Initialization Function
   * @param None
   * @retval None
@@ -245,6 +281,9 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
+
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
@@ -257,6 +296,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PB12 */
+  GPIO_InitStruct.Pin = GPIO_PIN_12;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
